@@ -122,10 +122,19 @@ module.exports.sockets = {
   * disconnects                                                              *
   *                                                                          *
   ***************************************************************************/
-  // afterDisconnect: function(session, socket, cb) {
-  //   // By default: do nothing.
-  //   return cb();
-  // },
+  afterDisconnect: function(session, socket, cb) {
+    Ticket.destroy({sessionId: socket.id})
+      .then((records) => {
+        sails.log(records);
+        sails.log(`Socket disconnected, removed ${records.length} tickets; session: ${socket.id}`);
+        Ticket.publishDestroy(records[0].id);
+        return cb();
+      })
+      .catch((err) => {
+        sails.log("Failed to destroy ticket associated with session", err);
+        return cb();
+      });
+  }
 
   /***************************************************************************
   *                                                                          *

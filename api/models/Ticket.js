@@ -1,3 +1,4 @@
+'use strict';
 /**
 * Ticket.js
 *
@@ -12,6 +13,14 @@ module.exports = {
     name : {
       type: 'string'
       , unique:true
+    },
+    sessionId : {
+      type: 'string'
+    },
+    toJSON: function () {
+      let obj = this.toObject();
+      delete obj.sessionId;
+      return obj;
     }
   }
 };
