@@ -9,20 +9,39 @@
 module.exports = {
 	hi:(req, res) => {
 		'use strict';
-		console.log(this);
-		return res.json(this);
+		return res.json({hello:'world'});
+	},
+	hiPost: (req, res) => {
+		return res.json({hello:req.body.value});
 	},
 	createTicket: (req, res) => {
 		let data = req.body;
-		data.sessionId = req.socket.id;
-		Ticket.create(data)
-			.then((ticket) => {
-				Ticket.publishCreate(ticket.toJSON());
-				console.log('ticket created: ', ticket.id, ticket.sessionId);
-				return res.json(ticket.toJSON());
-			})
-			.catch((err) => {
-				return res.json(err);
-			})
+		if (req.isSocket) {
+			data.socketId = req.socket.id;
+			Ticket.create(data)
+				.then((ticket) => {
+					if (sails.config.environment != 'testing') {
+						Ticket.publishCreate(ticket.toJSON());
+					}
+					req.session.ticket = ticket.toObject();
+					// req.session.save();
+
+					console.log('ticket created', ticket.id);
+					return res.json(ticket.toJSON());
+				})
+				.catch((err) => {
+					return res.json(err);
+				})
+		} else {
+			return res.json({
+				"error":"Can't create sessions from HTTP"
+			});
+		}
+
+	},
+
+	myTicket: (req, res) => {
+		// console.log('from my ticket', req.session);
+		return res.json(req.session.ticket);
 	}
 };

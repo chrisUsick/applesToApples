@@ -123,15 +123,34 @@ module.exports.sockets = {
   *                                                                          *
   ***************************************************************************/
   afterDisconnect: function(session, socket, cb) {
-    Ticket.destroy({sessionId: socket.id})
+    // Ticket.find({socketId:socket.id})
+    //   .then((records) => {
+    //     let ticket = records[0];
+    //     if (ticket) {
+    //       sails.log(`Socket disconnected, removed ${records.length} tickets; session: ${socket.id}`);
+    //       ticket.socketId = null;
+    //     }
+    //     return ticket.save();
+    //   })
+    //   .then((ticket) => {
+    //     Ticket.publishDestroy(ticket.id);
+    //     return cb();
+    //   })
+    //   .catch((err) => {
+    //     sails.log("Failed to destroy ticket associated with session", err);
+    //     return cb();
+    //   });
+    Ticket.destroy({socketId: socket.id})
       .then((records) => {
-        sails.log(records);
+        // sails.log(records);
         sails.log(`Socket disconnected, removed ${records.length} tickets; session: ${socket.id}`);
         Ticket.publishDestroy(records[0].id);
         return cb();
       })
       .catch((err) => {
-        sails.log("Failed to destroy ticket associated with session", err);
+        if (sails.config.environment != 'testing') {
+          sails.log("Failed to destroy ticket associated with session", err);
+        }
         return cb();
       });
   }

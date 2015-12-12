@@ -14,12 +14,12 @@ module.exports = {
       type: 'string'
       , unique:true
     },
-    sessionId : {
+    socketId : {
       type: 'string'
     },
     toJSON: function () {
       let obj = this.toObject();
-      delete obj.sessionId;
+      delete obj.socketId;
       return obj;
     }
   }
