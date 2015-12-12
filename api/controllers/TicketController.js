@@ -1,4 +1,5 @@
 'use strict';
+var P = require('bluebird');
 /**
  * TicketControllerController
  *
@@ -18,8 +19,10 @@ module.exports = {
 		let data = req.body;
 		if (req.isSocket) {
 			data.socketId = req.socket.id;
+			let ticket;
 			Ticket.create(data)
-				.then((ticket) => {
+				.then((t) => {
+					ticket = t;
 					if (sails.config.environment != 'testing') {
 						Ticket.publishCreate(ticket.toJSON());
 					}
@@ -27,7 +30,17 @@ module.exports = {
 					// req.session.save();
 
 					console.log('ticket created', ticket.id);
-					return res.json(ticket.toJSON());
+					return Ticket.count();
+				})
+				.then((count) => {
+					if (count >= 3) {
+						return Game.create()
+					} else {
+						return res.json(ticket.toJSON());
+					}
+				})
+				.then((game) => {
+						Ticket.update({}, {gameId:game.id})
 				})
 				.catch((err) => {
 					return res.json(err);
