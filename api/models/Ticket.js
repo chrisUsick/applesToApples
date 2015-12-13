@@ -17,6 +17,10 @@ module.exports = {
     socketId : {
       type: 'string'
     },
+    gameId : {
+      type:'integer',
+      defaultsTo:null
+    },
     toJSON: function () {
       let obj = this.toObject();
       delete obj.socketId;

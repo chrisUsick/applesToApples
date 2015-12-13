@@ -1,5 +1,6 @@
 'use strict';
 var P = require('bluebird');
+var _ = require('lodash');
 /**
  * TicketControllerController
  *
@@ -15,43 +16,38 @@ module.exports = {
 	hiPost: (req, res) => {
 		return res.json({hello:req.body.value});
 	},
-	createTicket: (req, res) => {
+	createTicket: P.coroutine(function* (req, res) {
 		let data = req.body;
 		if (req.isSocket) {
-			data.socketId = req.socket.id;
-			let ticket;
-			Ticket.create(data)
-				.then((t) => {
-					ticket = t;
-					if (sails.config.environment != 'testing') {
-						Ticket.publishCreate(ticket.toJSON());
-					}
-					req.session.ticket = ticket.toObject();
-					// req.session.save();
+			try {
+				data.socketId = req.socket.id;
+				let ticket;
+				ticket = yield Ticket.create(data);
 
-					console.log('ticket created', ticket.id);
-					return Ticket.count();
-				})
-				.then((count) => {
-					if (count >= 3) {
-						return Game.create()
-					} else {
-						return res.json(ticket.toJSON());
-					}
-				})
-				.then((game) => {
-						Ticket.update({}, {gameId:game.id})
-				})
-				.catch((err) => {
-					return res.json(err);
-				})
+				// req.session.save();
+				let count = yield Ticket.count({gameId:null});
+				console.log('ticket created', ticket.id, 'total: ', count);
+				if (count >= 3) {
+					let game = yield Game.create();
+					let newTickets = yield Ticket.update({gameId:null}, {gameId:game.id});
+					ticket = _.find(newTickets, {id:ticket.id});
+				}
+				if (sails.config.environment != 'testing') {
+					Ticket.publishCreate(ticket.toJSON());
+				}
+				req.session.ticket = ticket.toObject();
+				return res.json(ticket.toJSON());
+			} catch (e) {
+				console.log('error creating ticket', e);
+				return res.json(e);
+			}
 		} else {
 			return res.json({
 				"error":"Can't create sessions from HTTP"
 			});
 		}
 
-	},
+	}),
 
 	myTicket: (req, res) => {
 		// console.log('from my ticket', req.session);
