@@ -16,3 +16,6 @@ describe 'GameManager', ->
       game = yield GameManager.createGame tickets
       game.tickets.should.have.length 2
       done()
+
+    it 'should initialize the Game', (done) ->
+      done {error:'not implemented'}
