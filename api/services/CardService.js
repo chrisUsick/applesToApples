@@ -24,19 +24,25 @@ module.exports = class CardService {
   }
 
   getRedCards (count) {
-    return co(function* () {
-      return this._getCards(this.redKey(), count);
-    })();
+    // return co(function* () {
+    // })();
+    return this._getCards(this.redKey(), count);
   }
 
   _getCards (key, count) {
-    return co(function* () {
-      let cards = yield Redis.srandmembers(key, count);
-      for (card of cards) {
-        yield Redis.srem(key, card);
+    let self = this;
+    let func = co(function* () {
+      let cardCount = yield Redis.scardAsync(key);
+      if (cardCount < count) {
+        yield this.initializeGame();
+      }
+      let cards = yield Redis.srandmemberAsync(key, count);
+      for (let card of cards) {
+        yield Redis.sremAsync(key, card);
       }
 
       return cards.map((c) => JSON.parse(c));
-    })
+    });
+    return func.bind(this)();
   }
 }

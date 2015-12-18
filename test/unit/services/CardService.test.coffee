@@ -24,10 +24,34 @@ describe 'CardService', ->
       (P.coroutine ->
         cardService = new CardService(game.id);
         yield cardService.initializeGame()
-        count = yield Redis.scard cardService.redKey()
-        expect(count).to.be.greater.than 9
+        count = yield Redis.scardAsync cardService.redKey()
+        expect(count).to.be.above 9
+        done()
       )()
       return undefined
-  describe '#getRedCards', ->
-    it 'should return a list of cards'
-    it 'should add cards to used cards set'
+  # describe '#getRedCards', ->
+  #   it 'should return a list of cards'
+  #   it 'should add cards to used cards set'
+  describe '#_getCards', ->
+    cardService = null
+    cards = null
+    before (done) ->
+      (P.coroutine ->
+        cardService = new CardService game.id
+        cards = yield cardService._getCards cardService.redKey(), 3
+        done()
+      )()
+    it 'should return n cards', ->
+      cards.should.have.length 3
+
+    it 'should deserialize the cards',  ->
+      cards[0].should.have.property 'word'
+      cards[0].should.have.property 'description'
+      cards[0].should.have.property 'type'
+    it 'should reset the deck if not enough cards are left', (done) ->
+      (P.coroutine ->
+        count = yield Redis.scardAsync cardService.redKey()
+        cards = yield cardService._getCards cardService.redKey(), count + 1
+        cards.should.have.length count + 1
+        done()
+      )()

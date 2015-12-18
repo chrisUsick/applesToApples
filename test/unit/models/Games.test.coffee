@@ -89,9 +89,19 @@ describe 'GameModel', ->
       return undefined
 
   describe '#dealRedCards', ->
-    it 'should deal red cards to a ticket'
+    it 'should deal red cards to a ticket', (done) ->
+      (P.coroutine ->
+        yield game.getTickets()
+        ticket = game.tickets[0]
+        yield game.dealRedCards ticket
+        newTicket = yield Ticket.findOne id: ticket.id
+        newTicket.cards.should.have.length sails.config.game.CARD_COUNT
 
-  describe '#initializeGame', ->
+        done()
+      )()
+      return undefined
+
+  describe '#resetRound', ->
     it 'sets the judge'
     it 'deals red cards'
     it 'sets the green card'

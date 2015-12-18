@@ -21,6 +21,10 @@ module.exports = {
       type:'integer',
       defaultsTo:null
     },
+    cards : {
+      type:'array',
+      defaultsTo:[]
+    },
     toJSON: function () {
       let obj = this.toObject();
       delete obj.socketId;

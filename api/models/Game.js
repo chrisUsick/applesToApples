@@ -52,16 +52,18 @@ module.exports = {
     setJudge: P.coroutine(function* (ticket) {
       this.judge = ticket;
       return this.save();
-    })
+    }),
 
-    // dealRedCards: P.coroutine(function* (ticket) {
-    //   let cardService = new CardService(this.id);
-    //   cards = yield cardService.dealRedCards(7);
-    //   for (card of cards) {
-    //     ticket.cards.add(card);
-    //   }
-    //   yield ticket.save();
-    //   Ticket.publishUpdate(ticket.id, {cards:cards});
-    // })
+    dealRedCards: P.coroutine(function* (ticket) {
+      let cardService = new CardService(this.id);
+      let cards = yield cardService.getRedCards(sails.config.game.CARD_COUNT);
+      for (var card of cards) {
+        ticket.cards.push(card);
+      }
+      yield ticket.save();
+      if (sails.config.environment != 'testing'){
+        Ticket.publishUpdate(ticket.id, {cards:cards});
+      }
+    })
   }
 };

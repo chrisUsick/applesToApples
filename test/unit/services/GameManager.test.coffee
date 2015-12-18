@@ -4,6 +4,7 @@ chai.should()
 
 describe 'GameManager', ->
   describe '#createGame()', ->
+    game = null
     before (done) ->
       P.all [Ticket.destroy(), Game.destroy()]
         .then ->
@@ -18,4 +19,10 @@ describe 'GameManager', ->
       done()
 
     it 'should initialize the Game', (done) ->
-      done {error:'not implemented'}
+      (P.coroutine ->
+        cardService = new CardService game.id
+        count = yield Redis.scardAsync cardService.redKey()
+        count.should.be.above 9
+        done()
+      )()
+      return undefined
